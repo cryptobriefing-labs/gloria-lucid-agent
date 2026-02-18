@@ -169,7 +169,7 @@ app.get("/.well-known/agent-registration.json", (_req, res) => {
       {
         name: "A2A",
         endpoint:
-          "http://lucid.itsgloria.ai:3004/.well-known/agent-card.json",
+          "https://lucid.itsgloria.ai/.well-known/agent-card.json",
         version: "1.0",
       },
       {
