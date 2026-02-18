@@ -156,6 +156,35 @@ const runtime = await createAgent({
 
 const { app, addEntrypoint } = await createAgentApp(runtime);
 
+// --- ERC-8004 registration endpoint ---
+
+app.get("/.well-known/agent-registration.json", (_req, res) => {
+  res.json({
+    type: "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
+    name: "Gloria",
+    description:
+      "AI-powered crypto news intelligence. Curated news, AI recaps, keyword search, and ticker analysis across 16 crypto categories including Bitcoin, Ethereum, DeFi, AI, Solana, and more.",
+    image: "https://itsgloria.ai/gloria-logo.png",
+    services: [
+      {
+        name: "A2A",
+        endpoint:
+          "http://lucid.itsgloria.ai:3004/.well-known/agent-card.json",
+        version: "1.0",
+      },
+      {
+        name: "web",
+        endpoint: "https://itsgloria.ai/",
+      },
+    ],
+    x402Support: true,
+    active: true,
+    registrations: [],
+    updatedAt: Math.floor(Date.now() / 1000),
+    supportedTrust: ["reputation"],
+  });
+});
+
 // --- Entrypoints ---
 
 addEntrypoint({
