@@ -179,7 +179,12 @@ app.get("/.well-known/agent-registration.json", (_req, res) => {
     ],
     x402Support: true,
     active: true,
-    registrations: [],
+    registrations: [
+      {
+        agentId: 18095,
+        agentRegistry: "eip155:8453:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      },
+    ],
     updatedAt: Math.floor(Date.now() / 1000),
     supportedTrust: ["reputation"],
   });
