@@ -16,15 +16,14 @@ Runtime:      One EC2 instance, referenced by the SSH_HOST variable.
               Directory:  $APP_DIRECTORY variable
               systemd:    $APP_NAME variable (a .service unit, User=ubuntu)
               ExecStart:  the bun binary at $BUN_BIN, running `bun run src/index.ts`
-              Listens on PORT from the host .env (3004).
+              Listens only on 127.0.0.1 and PORT from the host .env (3004).
 Production:   https://lucid.itsgloria.ai  (Cloudflare Tunnel to 127.0.0.1:3004)
 Staging:      none, Tier S.
 Branch:       master. NOT main. See "The branch is master".
 ```
 
-**Status: the pipeline in this file is AUTHORED BUT NEVER RUN.** It has not been
-exercised once. Read "Before the first deploy" at the bottom before merging
-anything that would trigger it.
+**Status: the pipeline is active.** Production deploys passed on 2026-08-07 and
+2026-08-13. Read "Before the first deploy" below before changing its setup.
 
 ---
 
