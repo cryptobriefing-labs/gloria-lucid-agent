@@ -9,6 +9,7 @@ import {
   paymentsFromEnv,
   createInMemoryPaymentStorage,
 } from "@lucid-agents/payments";
+import { gloriaFetch as gloriaFetchWithConfig, safeHandler } from "./gloria.js";
 
 const GLORIA_API_URL = process.env.GLORIA_API_URL;
 const GLORIA_API_TOKEN = process.env.GLORIA_API_TOKEN_DEV;
@@ -105,32 +106,10 @@ const tickerSummaryOutputSchema = z.object({
 
 // --- Gloria API helper ---
 
-async function gloriaFetch(
-  path: string,
-  params: Record<string, string>
-): Promise<unknown> {
-  if (!GLORIA_API_URL || !GLORIA_API_TOKEN) {
-    throw new Error(
-      "GLORIA_API_URL and GLORIA_API_TOKEN_DEV must be set in .env"
-    );
-  }
+const gloriaConfig = { apiUrl: GLORIA_API_URL, apiToken: GLORIA_API_TOKEN };
 
-  const url = new URL(path, GLORIA_API_URL);
-  url.searchParams.set("token", GLORIA_API_TOKEN);
-  for (const [k, v] of Object.entries(params)) {
-    if (v !== undefined && v !== "") url.searchParams.set(k, v);
-  }
-
-  const res = await fetch(url.toString(), {
-    signal: AbortSignal.timeout(120_000),
-  });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Gloria API ${res.status}: ${body}`);
-  }
-
-  return res.json();
+function gloriaFetch(path: string, params: Record<string, string>) {
+  return gloriaFetchWithConfig(gloriaConfig, path, params);
 }
 
 // --- Build agent runtime ---
@@ -199,7 +178,7 @@ addEntrypoint({
   input: newsInputSchema,
   output: newsOutputSchema,
   price: process.env.PRICE_NEWS || "30000",
-  handler: async (ctx) => {
+  handler: safeHandler("news", async (ctx) => {
     const { feed_categories, from_date, to_date } = ctx.input as z.infer<
       typeof newsInputSchema
     >;
@@ -214,7 +193,7 @@ addEntrypoint({
 
     const items = Array.isArray(data) ? data : [];
     return { output: { items } };
-  },
+  }),
 });
 
 addEntrypoint({
@@ -224,7 +203,7 @@ addEntrypoint({
   input: recapInputSchema,
   output: recapOutputSchema,
   price: process.env.PRICE_RECAP || "100000",
-  handler: async (ctx) => {
+  handler: safeHandler("recaps", async (ctx) => {
     const { feed_category } = ctx.input as z.infer<typeof recapInputSchema>;
 
     const timeframe = CATEGORIES_24H.includes(feed_category) ? "24h" : "12h";
@@ -235,7 +214,7 @@ addEntrypoint({
     })) as z.infer<typeof recapOutputSchema>;
 
     return { output: data };
-  },
+  }),
 });
 
 addEntrypoint({
@@ -245,7 +224,7 @@ addEntrypoint({
   input: searchInputSchema,
   output: searchOutputSchema,
   price: process.env.PRICE_SEARCH || "50000",
-  handler: async (ctx) => {
+  handler: safeHandler("search", async (ctx) => {
     const { keyword } = ctx.input as z.infer<typeof searchInputSchema>;
 
     const data = await gloriaFetch("/news", {
@@ -256,7 +235,7 @@ addEntrypoint({
 
     const items = Array.isArray(data) ? data : [];
     return { output: { items } };
-  },
+  }),
 });
 
 addEntrypoint({
@@ -266,7 +245,7 @@ addEntrypoint({
   input: tickerSummaryInputSchema,
   output: tickerSummaryOutputSchema,
   price: process.env.PRICE_TICKER_SUMMARY || "31000",
-  handler: async (ctx) => {
+  handler: safeHandler("ticker-summary", async (ctx) => {
     const { ticker } = ctx.input as z.infer<typeof tickerSummaryInputSchema>;
 
     const data = (await gloriaFetch("/news-ticker-summary", {
@@ -274,7 +253,7 @@ addEntrypoint({
     })) as z.infer<typeof tickerSummaryOutputSchema>;
 
     return { output: data };
-  },
+  }),
 });
 
 export { app };
